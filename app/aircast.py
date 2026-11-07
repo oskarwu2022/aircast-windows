@@ -27,6 +27,18 @@ APP_TITLE = "AirCast 局域网投屏"
 GUIDE_PORT = 8787
 UXPLAY_TCP_PORT = 7000  # 连接状态探测用
 
+
+def _init_stdio():
+    """控制台编码可能是 cp1252/GBK，放宽成 utf-8 + replace，避免打印中文直接抛异常。"""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
+_init_stdio()
+
 APP_DIR = os.path.dirname(os.path.abspath(sys.argv[0] if getattr(sys, "frozen", False) else __file__))
 SETTINGS_PATH = os.path.join(APP_DIR, "aircast-settings.json")
 DATA_DIR = os.path.join(APP_DIR, "data")
@@ -52,12 +64,17 @@ def find_runtime():
             if not os.path.isdir(plugins):
                 plugins = os.path.join(base, "lib", "gstreamer-1.0")
             return base, plugins
-    # 开发模式回退到构建目录
-    dev = r"C:\Users\oskarwu\AirCast\msys64\ucrt64"
-    if os.path.isfile(os.path.join(dev, "bin", "uxplay.exe")):
-        return os.path.join(dev, "bin"), os.path.join(dev, "lib", "gstreamer-1.0")
-    if os.path.isfile(os.path.join(dev, "bin", "gst-launch-1.0.exe")):
-        return os.path.join(dev, "bin"), os.path.join(dev, "lib", "gstreamer-1.0")
+    # 开发模式：从环境变量或常见 MSYS2 安装位置找 uxplay.exe
+    dev_candidates = [os.environ.get("AIRCAST_UXPLAY_DIR", "")]
+    dev_candidates += [
+        r"C:\msys64\ucrt64",
+        r"C:\tools\msys64\ucrt64",
+    ]
+    for dev in dev_candidates:
+        if not dev:
+            continue
+        if os.path.isfile(os.path.join(dev, "bin", "uxplay.exe")):
+            return os.path.join(dev, "bin"), os.path.join(dev, "lib", "gstreamer-1.0")
     return None, None
 
 
@@ -653,8 +670,14 @@ def selftest():
 
     def out(*a):
         s = " ".join(str(x) for x in a)
-        print(s)
         lines.append(s)
+        # 控制台可能是 cp1252/GBK，打印失败不能影响自检本身
+        try:
+            print(s)
+            sys.stdout.flush()
+        except Exception:
+            pass
+        _write_selftest(lines)
 
     out("APP_DIR      =", APP_DIR)
     rt, plugins = find_runtime()
@@ -663,26 +686,30 @@ def selftest():
     out("local ip     =", local_ipv4())
     if not rt:
         out("FAIL: 未找到 uxplay.exe")
-        _write_selftest(lines)
+        out("SELFTEST FAILED")
         return 1
-    root = tk.Tk()
-    root.withdraw()
-    app = AirCastApp(root)
-    out("rc lines     =", app.build_rc_lines())
-    app.start_server()
-    for _ in range(60):
+    try:
+        root = tk.Tk()
+        root.withdraw()
+        app = AirCastApp(root)
+        out("rc lines     =", app.build_rc_lines())
+        app.start_server()
+        for _ in range(60):
+            root.update()
+            time.sleep(0.1)
+        alive = app.proc is not None and app.proc.poll() is None
+        out("uxplay alive =", alive)
+        out("--- log ---")
+        out(app.log.get("1.0", "end").strip())
+        app.stop_server()
         root.update()
-        time.sleep(0.1)
-    alive = app.proc is not None and app.proc.poll() is None
-    out("uxplay alive =", alive)
-    out("--- log ---")
-    out(app.log.get("1.0", "end").strip())
-    app.stop_server()
-    root.update()
-    root.destroy()
-    out("SELFTEST", "OK" if alive else "FAILED")
-    _write_selftest(lines)
-    return 0 if alive else 1
+        root.destroy()
+        out("SELFTEST", "OK" if alive else "FAILED")
+        return 0 if alive else 1
+    except Exception as e:
+        out("EXCEPTION:", repr(e))
+        out("SELFTEST FAILED")
+        return 1
 
 
 def _write_selftest(lines):
