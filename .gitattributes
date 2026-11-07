@@ -1,0 +1,15 @@
+# 统一换行，避免 Windows 下 checkout 后 shell 脚本带 CRLF 无法执行
+* text=auto eol=lf
+
+*.sh    text eol=lf
+*.py    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+
+# PowerShell 脚本保持 CRLF（脚本内是 UTF-8 with BOM，便于 Windows PowerShell 5.1 正确解析中文）
+*.ps1   text eol=crlf
+
+*.ico   binary
+*.png   binary

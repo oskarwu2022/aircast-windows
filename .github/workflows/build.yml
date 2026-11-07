@@ -1,0 +1,92 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows-x64:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------- 1) MSYS2 + GStreamer 工具链 ----------
+      - name: Setup MSYS2 (UCRT64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-libplist
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-gstreamer
+            mingw-w64-ucrt-x86_64-gst-plugins-base
+            mingw-w64-ucrt-x86_64-gst-libav
+            mingw-w64-ucrt-x86_64-gst-plugins-good
+            mingw-w64-ucrt-x86_64-gst-plugins-bad
+
+      # ---------- 2) 编译 UxPlay ----------
+      - name: Build UxPlay
+        shell: msys2 {0}
+        run: bash build/build-uxplay.sh
+
+      # ---------- 3) 收集可移植 runtime ----------
+      - name: Collect portable runtime
+        shell: msys2 {0}
+        run: bash build/make-runtime.sh
+
+      # ---------- 4) 打包 GUI ----------
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Package AirCast.exe
+        shell: pwsh
+        run: ./build/build-exe.ps1 -Python python
+
+      # ---------- 5) 自检（启动 uxplay 并检查进程存活） ----------
+      - name: Self test
+        shell: pwsh
+        run: |
+          & ./dist/AirCast/AirCast.exe --selftest
+          Start-Sleep -Seconds 1
+          if (Test-Path ./dist/AirCast/data/selftest.log) {
+            Get-Content ./dist/AirCast/data/selftest.log
+            if (-not (Select-String -Path ./dist/AirCast/data/selftest.log -Pattern 'SELFTEST OK' -Quiet)) {
+              throw "自检未通过"
+            }
+          } else {
+            throw "没有生成 selftest.log"
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AirCast-Windows-x64
+          path: AirCast-Windows-x64.zip
+          if-no-files-found: error
+
+      # ---------- 6) 打 tag 时自动发布 ----------
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: AirCast-Windows-x64.zip
+          generate_release_notes: true
+          body: |
+            Windows x64 便携包：解压后双击 `AirCast.exe`（`_internal\` 与 `runtime\` 必须与 exe 同级）。
+
+            内含第三方二进制，许可证见 THIRD-PARTY.md：
+            - UxPlay **GPLv3** — https://github.com/FDH2/UxPlay
+            - GStreamer / FFmpeg **LGPL** — https://gstreamer.freedesktop.org/

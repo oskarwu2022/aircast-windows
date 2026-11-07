@@ -1,0 +1,13 @@
+# 由 build/ 下的脚本生成，不进仓库
+/runtime/
+/dist/
+/.work/
+*.zip
+*.spec
+
+# 运行期数据
+/data/
+aircast-settings.json
+__pycache__/
+*.pyc
+*.log
