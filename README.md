@@ -1,5 +1,9 @@
 # AirCast · 把 Windows 变成 AirPlay 接收端
 
+[![build](https://github.com/oskarwu2022/aircast-windows/actions/workflows/build.yml/badge.svg)](https://github.com/oskarwu2022/aircast-windows/actions/workflows/build.yml)
+[![release](https://img.shields.io/github/v/release/oskarwu2022/aircast-windows?label=release)](https://github.com/oskarwu2022/aircast-windows/releases/latest)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 一个开箱即用的局域网投屏接收端：**iPhone / iPad / Mac 在控制中心「屏幕镜像」里点一下，画面和声音就投到 Windows 电脑上**。
 全局域网直连，不经过任何服务器，不需要联网账号。
 
@@ -50,8 +54,8 @@ iPhone ──AirPlay(局域网)──> AirCast.exe (GUI) ──> uxplay.exe ─�
 需要 **Windows 10/11 x64**、[MSYS2](https://www.msys2.org/)（默认装在 `C:\msys64`）、Python 3.10+。
 
 ```powershell
-git clone https://github.com/<you>/<repo>.git
-cd <repo>
+git clone https://github.com/oskarwu2022/aircast-windows.git
+cd aircast-windows
 ```
 
 **① 装 MSYS2 依赖**（打开 "MSYS2 UCRT64" 终端）：

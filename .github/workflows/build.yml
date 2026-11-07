@@ -85,11 +85,28 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          name: AirCast ${{ github.ref_name }} — Windows x64 便携包
           files: AirCast-Windows-x64.zip
           generate_release_notes: true
           body: |
-            Windows x64 便携包：解压后双击 `AirCast.exe`（`_internal\` 与 `runtime\` 必须与 exe 同级）。
+            Windows x64 便携包，**解压即用**（无需安装 Python / Bonjour / GStreamer）。本包由 GitHub Actions 从本仓库源码自动构建。
 
-            内含第三方二进制，许可证见 THIRD-PARTY.md：
-            - UxPlay **GPLv3** — https://github.com/FDH2/UxPlay
-            - GStreamer / FFmpeg **LGPL** — https://gstreamer.freedesktop.org/
+            1. 下载 `AirCast-Windows-x64.zip`，解压到任意目录（`AirCast.exe`、`_internal\`、`runtime\` 必须同级）
+            2. 双击 `AirCast.exe` → 点「▶ 启动接收端」
+            3. iPhone/iPad：控制中心 → **屏幕镜像** → 选你的设备名
+
+            想启动即开播：`AirCast.exe --autostart`
+            自检排错：`AirCast.exe --selftest`（约 8 秒后写入 `data\selftest.log`，末尾应有 `SELFTEST OK`）
+
+            ### 内容
+            - 界面外壳：本仓库 `app/aircast.py`（MIT）
+            - AirPlay 内核：[UxPlay 1.74](https://github.com/FDH2/UxPlay)（**GPLv3**，`-DUSE_MDNS=1` 内置 mDNS，无需装 Bonjour）
+            - 渲染：GStreamer 1.28 + gst-libav（**LGPL**），D3D12 视频硬解 + WASAPI 音频输出
+
+            ### 已知限制
+            - Apple TV App 的 DRM 影片无法投（仅声音）——所有开源接收端共同限制
+            - 不支持 AirPlay 2 多房间音频；HLS（YouTube 类）视频默认未启用
+            - 电脑需与手机同一局域网；防火墙需放行（界面里有「配置防火墙」按钮）
+
+            > 内含 GPLv3/LGPL 第三方二进制，许可证与源码链接见仓库 `THIRD-PARTY.md`。
+
