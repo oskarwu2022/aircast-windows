@@ -60,16 +60,19 @@ jobs:
       - name: Self test
         shell: pwsh
         run: |
-          & ./dist/AirCast/AirCast.exe --selftest
-          Start-Sleep -Seconds 1
-          if (Test-Path ./dist/AirCast/data/selftest.log) {
-            Get-Content ./dist/AirCast/data/selftest.log
-            if (-not (Select-String -Path ./dist/AirCast/data/selftest.log -Pattern 'SELFTEST OK' -Quiet)) {
-              throw "自检未通过"
-            }
-          } else {
-            throw "没有生成 selftest.log"
+          # 注意：AirCast.exe 是 GUI 子系统程序，直接 & 调用不会等待其结束，必须显式 WaitForExit
+          $p = Start-Process -FilePath ./dist/AirCast/AirCast.exe -ArgumentList '--selftest' -PassThru
+          if (-not $p.WaitForExit(180000)) {
+            $p.Kill()
+            throw "自检超时（180s）"
           }
+          "exit code = $($p.ExitCode)"
+          if (-not (Test-Path ./dist/AirCast/data/selftest.log)) { throw "没有生成 selftest.log" }
+          Get-Content ./dist/AirCast/data/selftest.log
+          if (-not (Select-String -Path ./dist/AirCast/data/selftest.log -Pattern 'SELFTEST OK' -Quiet)) {
+            throw "自检未通过"
+          }
+          if ($p.ExitCode -ne 0) { throw "自检退出码 $($p.ExitCode)" }
 
       - uses: actions/upload-artifact@v4
         with:

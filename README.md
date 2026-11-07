@@ -18,7 +18,7 @@ iPhone ──AirPlay(局域网)──> AirCast.exe (GUI) ──> uxplay.exe ─�
 - 🎛️ **常用开关都在界面上**：设备名、720p~4K、全屏、静音、PIN 码确认、允许新设备抢占、低延迟模式、录制 mp4、实时日志、连接状态灯
 - 📱 **二维码引导**：界面右侧二维码指向本机小网页，别人扫码即可看到连接步骤（适合会议室/教室）
 - 🛡️ **一键防火墙**：界面里点一下，UAC 提权后自动放行程序与端口、把网络切到「专用」
-- 🧰 **自带自检**：`AirCast.exe --selftest` 输出环境与启动结果到 `data\selftest.log`
+- 🧰 **自带自检**：`AirCast.exe --selftest` 输出环境与启动结果到 `data\selftest.log`（GUI 程序，约 8 秒后写完）
 
 ## 快速开始
 
@@ -118,7 +118,7 @@ build\
 1. 界面点 **配置防火墙**（或手动 `powershell -ExecutionPolicy Bypass -File scripts\allow-firewall.ps1`）
 2. 网络必须是「专用」：设置 → 网络和 Internet → Wi-Fi → 属性 → 网络配置文件 → 专用
 3. 关闭路由器的 **AP 隔离 / 客户端隔离**；手机别开 VPN、别连访客 Wi-Fi
-4. 本机自检：`AirCast.exe --selftest`，看 `data\selftest.log`
+4. 本机自检：`AirCast.exe --selftest`，约 8 秒后看 `data\selftest.log`（末尾出现 `SELFTEST OK` 即正常）
 5. 确认服务确实在广播（任意装了 Python 的机器）：
    ```powershell
    python -c "from zeroconf import Zeroconf,ServiceBrowser; import time;\
