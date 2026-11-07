@@ -1,5 +1,7 @@
 # AirCast · 把 Windows 变成 AirPlay 接收端
 
+**中文** | [English](README.en.md)
+
 [![build](https://github.com/oskarwu2022/aircast-windows/actions/workflows/build.yml/badge.svg)](https://github.com/oskarwu2022/aircast-windows/actions/workflows/build.yml)
 [![release](https://img.shields.io/github/v/release/oskarwu2022/aircast-windows?label=release)](https://github.com/oskarwu2022/aircast-windows/releases/latest)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
