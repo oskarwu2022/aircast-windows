@@ -240,7 +240,7 @@ class AirCastApp:
     # ---------------------------------------------------------------- 配置
     def load_settings(self):
         defaults = {
-            "name": "AirCast 客厅",
+            "name": "AirCast",
             "preset": "高清 1080p30",
             "fullscreen": False,
             "audio": True,

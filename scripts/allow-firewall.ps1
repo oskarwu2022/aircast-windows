@@ -21,12 +21,15 @@ if (-not (Test-Admin)) {
 }
 
 if (-not $Exe) {
-    $guess = @(
+    $candidates = @(
         (Join-Path $PSScriptRoot '..\runtime\uxplay.exe'),
         (Join-Path $PSScriptRoot '..\app\runtime\uxplay.exe'),
-        'C:\Users\oskarwu\AirCast\msys64\ucrt64\bin\uxplay.exe'
-    ) | ForEach-Object { [IO.Path]::GetFullPath($_) } | Where-Object { Test-Path $_ } | Select-Object -First 1
-    $Exe = $guess
+        (Join-Path $PSScriptRoot '..\..\runtime\uxplay.exe')
+    )
+    if ($env:AIRCAST_UXPLAY_DIR) { $candidates += (Join-Path $env:AIRCAST_UXPLAY_DIR 'uxplay.exe') }
+    $cmd = Get-Command uxplay.exe -ErrorAction SilentlyContinue
+    if ($cmd) { $candidates += $cmd.Source }
+    $Exe = $candidates | ForEach-Object { [IO.Path]::GetFullPath($_) } | Where-Object { Test-Path $_ } | Select-Object -First 1
 }
 
 Write-Host "== AirCast 防火墙配置 ==" -ForegroundColor Cyan
